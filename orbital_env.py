@@ -110,7 +110,7 @@ if __name__ == '__main__':
     
     # Step through time to show dynamic orbital calculations
     dt = 60.0 * 0.5  # Propagate 1/2 minutes per step
-    for step_num in range(50):
+    for step_num in range(500):
         actions = []
         
         # Satellite 0 does nothing
@@ -126,4 +126,4 @@ if __name__ == '__main__':
         print('Step', step_num+1, '| Sat 1 Vel:', round(np.linalg.norm(env.satellites[1].vel), 2), 'm/s', '| Fuel left:', round(env.satellites[1].fuel_mass, 2), 'kg')
         
         renderer.update(env.orbit_data_cache)
-        time.sleep(0.1) # Briefly pause loop to animate cleanly
+        time.sleep(0.25) # Briefly pause loop to animate cleanly

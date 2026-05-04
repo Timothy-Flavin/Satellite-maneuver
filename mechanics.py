@@ -311,9 +311,9 @@ class InteractiveCoverageRenderer:
         self.plotter.show(interactive_update=True)
 
     def update(self, satellites_data: list):
-        # Remove previous satellite meshes
+        # 1. Remove previous satellite meshes WITHOUT triggering a render
         for actor in self.dynamic_actors:
-            self.plotter.remove_actor(actor)
+            self.plotter.remove_actor(actor, render=False)
         self.dynamic_actors.clear()
 
         r_earth = 6371e3
@@ -327,7 +327,9 @@ class InteractiveCoverageRenderer:
             closed_orbit = np.vstack([scaled_orbit, scaled_orbit[0]])
             orbit_poly = pv.PolyData(closed_orbit)
             orbit_poly.lines = np.hstack([[len(closed_orbit)], np.arange(len(closed_orbit))])
-            actor1 = self.plotter.add_mesh(orbit_poly, color="blue", line_width=3)
+            
+            # Add render=False
+            actor1 = self.plotter.add_mesh(orbit_poly, color="blue", line_width=3, render=False)
             self.dynamic_actors.append(actor1)
 
             # Observation Band (Red dots)
@@ -342,25 +344,32 @@ class InteractiveCoverageRenderer:
             band_mesh = pv.PolyData(band_points)
             band_mesh.point_data["colors"] = red_colors
 
+            # Add render=False
             actor2 = self.plotter.add_mesh(
                 band_mesh, 
                 scalars="colors",
                 rgb=True,
                 point_size=5, 
-                render_points_as_spheres=True
+                render_points_as_spheres=True,
+                render=False
             )
             self.dynamic_actors.append(actor2)
             
             # Current Satellite Position (Green dot)
             current_scaled = current_pos / r_earth
+            
+            # Add render=False
             actor3 = self.plotter.add_mesh(
                 pv.PolyData(current_scaled[None, :]),
                 color="green",
                 point_size=15,
-                render_points_as_spheres=True
+                render_points_as_spheres=True,
+                render=False
             )
             self.dynamic_actors.append(actor3)
 
+        # 2. Draw the screen ONCE now that all math and geometry are loaded
+        self.plotter.render()
         self.plotter.update()
 
 def initialize_coverage_arrays(nside: int):
