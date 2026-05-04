@@ -174,7 +174,7 @@ def step_orbit(pos: np.ndarray, vel: np.ndarray, dt: float, mu: float = 3.986004
             s = 1.0/6.0
             c = 1.0/2.0
             
-        r_mag = chi**2 * c + r0.dot(v0) / np.sqrt(mu) * chi * (1 - z*s) + r_norm * (1 - z*c)
+        #r_mag = chi**2 * c + r0.dot(v0) / np.sqrt(mu) * chi * (1 - z*s) + r_norm * (1 - z*c)
         f_chi = v0.dot(r0) / np.sqrt(mu) * chi**2 * c + (1 - alpha * r_norm) * chi**3 * s + r_norm * chi - np.sqrt(mu) * dt
         f_prime = chi**2 * c + r0.dot(v0) / np.sqrt(mu) * chi * (1 - z*s) + r_norm * (1 - z*c)
         
@@ -388,7 +388,6 @@ def splat_to_healpix(
     # because multiple points might splat onto the exact same pixel in a single batch,
     # and standard indexing would overwrite rather than accumulate.
     np.add.at(target_map, neighbors, splat_values)
-
 
 def extract_agent_observation(
     band_points: np.ndarray,
