@@ -5,7 +5,8 @@ from mechanics import (
     generate_orbital_band_points,
     splat_to_healpix,
     extract_agent_observation,
-    visualize_coverage_scene
+    visualize_coverage_scene,
+    InteractiveCoverageRenderer
 )
 from satellite import Satellite
 
@@ -97,14 +98,18 @@ class OrbitalEnv:
 
 
 if __name__ == '__main__':
+    import time
     env = OrbitalEnv(num_satellites=2, nside=16)
+    
+    # Initialize interactive renderer map
+    renderer = InteractiveCoverageRenderer(nside=16)
     
     # Initialize observation mapping
     _ = env.observe()
     
     # Step through time to show dynamic orbital calculations
-    dt = 60.0
-    for step_num in range(10):
+    dt = 60.0 * 0.5  # Propagate 1/2 minutes per step
+    for step_num in range(50):
         actions = []
         
         # Satellite 0 does nothing
@@ -112,12 +117,12 @@ if __name__ == '__main__':
         
         # Satellite 1 thrusts randomly
         random_attitude = np.random.randn(3)
-        actions.append({'throttle': 0.5, 'attitude': random_attitude})
+        actions.append({'throttle': 0.5, 'attitude': [1.0, 0.0, 0.0]})
         
         obs = env.step(actions, dt)
+        
         print('Step', step_num+1, '| Sat 0 Vel:', round(np.linalg.norm(env.satellites[0].vel), 2), 'm/s')
         print('Step', step_num+1, '| Sat 1 Vel:', round(np.linalg.norm(env.satellites[1].vel), 2), 'm/s', '| Fuel left:', round(env.satellites[1].fuel_mass, 2), 'kg')
-        shapes = [o.shape for o in obs]
-        print('Obs tensor shapes:', shapes, '\n')
         
-    env.render()
+        renderer.update(env.orbit_data_cache)
+        time.sleep(0.1) # Briefly pause loop to animate cleanly
