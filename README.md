@@ -1,3 +1,5 @@
+![Satellite Arena Demo](2sat.png)
+
 # Satellite Arena: Orbital Coverage RL Demo
 
 This project simulates a multi-agent satellite environment for orbital coverage, designed for reinforcement learning (RL) research and visualization. It features physically accurate orbital mechanics, real-time 3D visualization, and ego-centric observation tensors suitable for deep learning.
