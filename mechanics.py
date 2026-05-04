@@ -83,8 +83,16 @@ def generate_temporal_orbit_points(
         p_hat = r0 / r_norm
         q_hat = np.cross(w_hat, p_hat)
         
+    # Find current Eccentric and Mean Anomaly
+    x_w = np.dot(r0, p_hat)
+    y_w = np.dot(r0, q_hat)
+    cos_E0 = x_w / a + e
+    sin_E0 = y_w / (a * np.sqrt(1.0 - e**2))
+    E0 = np.arctan2(sin_E0, cos_E0)
+    M0 = E0 - e * np.sin(E0)
+    
     # Temporally spaced points mean equally spaced Mean Anomaly (M)
-    M = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
+    M = np.linspace(M0, M0 + 2 * np.pi, num_points, endpoint=False)
     
     # Vectorized Newton-Raphson to solve Kepler's Equation: M = E - e*sin(E)
     E = M.copy()
@@ -217,7 +225,7 @@ def visualize_coverage_scene(
         color="white", 
         point_size=4, 
         render_points_as_spheres=True,
-        opacity=0.3
+        opacity=0.5
     )
 
     for sat in satellites_data:
@@ -242,9 +250,21 @@ def visualize_coverage_scene(
             line_width=3
         )
 
+        num_orbit_pts = len(orbit_points)
+        num_rows = len(band_points) // num_orbit_pts
+        temporal_decay = np.linspace(1.0, 0.1, num_orbit_pts)
+        alphas = np.tile(temporal_decay, num_rows)
+        red_colors = np.zeros((len(band_points), 4), dtype=np.uint8)
+        red_colors[:, 0] = 255
+        red_colors[:, 3] = (alphas * 255).astype(np.uint8)
+
+        band_mesh = pv.PolyData(band_points)
+        band_mesh.point_data["colors"] = red_colors
+
         plotter.add_mesh(
-            pv.PolyData(band_points), 
-            color="red", 
+            band_mesh, 
+            scalars="colors",
+            rgb=True,
             point_size=5, 
             render_points_as_spheres=True
         )
@@ -311,9 +331,21 @@ class InteractiveCoverageRenderer:
             self.dynamic_actors.append(actor1)
 
             # Observation Band (Red dots)
+            num_orbit_pts = len(orbit_points)
+            num_rows = len(band_points) // num_orbit_pts
+            temporal_decay = np.linspace(1.0, 0.3, num_orbit_pts)
+            alphas = np.tile(temporal_decay, num_rows)
+            red_colors = np.zeros((len(band_points), 4), dtype=np.uint8)
+            red_colors[:, 0] = 255
+            red_colors[:, 3] = (alphas * 255).astype(np.uint8)
+
+            band_mesh = pv.PolyData(band_points)
+            band_mesh.point_data["colors"] = red_colors
+
             actor2 = self.plotter.add_mesh(
-                pv.PolyData(band_points), 
-                color="red", 
+                band_mesh, 
+                scalars="colors",
+                rgb=True,
                 point_size=5, 
                 render_points_as_spheres=True
             )
@@ -447,8 +479,9 @@ if __name__ == "__main__":
     # Generate two random satellite orbits
     np.random.seed(42)
     satellites = []
+    npts=128
     
-    for i in range(2):
+    for i in range(4):
         # Random LEO-ish positions (around 7000 km altitude)
         pos_dir = np.random.randn(3)
         pos_dir /= np.linalg.norm(pos_dir)
@@ -478,7 +511,7 @@ if __name__ == "__main__":
         sat['vel'] = v_new
         
         # Generate the physical orbit points
-        orbit_pts = generate_temporal_orbit_points(sat['pos'], sat['vel'], num_points=256)
+        orbit_pts = generate_temporal_orbit_points(sat['pos'], sat['vel'], num_points=npts)
         
         # Generate band for satellite
         band_pts = generate_orbital_band_points(orbit_pts, N_deg=15.0, K_deg=3.0)
@@ -516,7 +549,7 @@ if __name__ == "__main__":
             current_cov=current_cov,
             priority=priority,
             nside=NSIDE,
-            num_orbit_points=256
+            num_orbit_points=npts
         )
         sat['observation'] = obs
 

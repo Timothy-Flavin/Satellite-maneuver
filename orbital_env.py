@@ -11,10 +11,11 @@ from mechanics import (
 from satellite import Satellite
 
 class OrbitalEnv:
-    def __init__(self, num_satellites=2, nside=16, mu_earth=3.986004418e14):
+    def __init__(self, num_satellites=2, nside=16, mu_earth=3.986004418e14,npts=256):
         self.num_satellites = num_satellites
         self.nside = nside
         self.mu_earth = mu_earth
+        self.npts = npts
         
         self.satellites = []
         np.random.seed(42)
@@ -51,7 +52,7 @@ class OrbitalEnv:
         self.orbit_data_cache = []
         
         for sat in self.satellites:
-            orbit_pts = generate_temporal_orbit_points(sat.pos, sat.vel, num_points=256, mu=self.mu_earth)
+            orbit_pts = generate_temporal_orbit_points(sat.pos, sat.vel, num_points=self.npts, mu=self.mu_earth)
             band_pts = generate_orbital_band_points(orbit_pts, N_deg=15.0, K_deg=3.0)
             
             # Splat orbit path into Steady State Map
@@ -87,7 +88,7 @@ class OrbitalEnv:
                 current_cov=self.current_cov,
                 priority=self.priority,
                 nside=self.nside,
-                num_orbit_points=256
+                num_orbit_points=self.npts
             )
             observations.append(obs)
             
@@ -99,7 +100,7 @@ class OrbitalEnv:
 
 if __name__ == '__main__':
     import time
-    env = OrbitalEnv(num_satellites=2, nside=16)
+    env = OrbitalEnv(num_satellites=2, nside=16, npts=128)
     
     # Initialize interactive renderer map
     renderer = InteractiveCoverageRenderer(nside=16)
